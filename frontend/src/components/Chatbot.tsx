@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Lottie from 'lottie-react';
-import { X, Send, Minimize2, Download, Loader2 } from 'lucide-react';
+import { X, Send, Minimize2, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useChat } from '../contexts/ChatContext';
 import axiosInstance from '../api/axiosInstance';
@@ -470,7 +470,14 @@ const handleBookingConfirmation = async (confirmed: boolean) => {
       <AnimatePresence>
         {isChatOpen && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className={`w-full max-w-md bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 ${isMinimized ? 'h-16' : 'h-[600px]'}`}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }} 
+              exit={{ scale: 0.9, opacity: 0 }} 
+              className={`w-full max-w-md bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 ${
+                isMinimized ? 'h-16' : 'h-[600px] max-h-[calc(100dvh-2rem)]'
+              }`}
+            >
               <div className="bg-gradient-to-r from-teal-500 via-blue-500 to-purple-600 text-white p-4 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"><Lottie animationData={robotAnimation} className="w-6 h-6" loop={true} /></div>
@@ -523,7 +530,7 @@ const handleBookingConfirmation = async (confirmed: boolean) => {
                     )}
                     <div ref={messagesEndRef} />
                   </div>
-                  <div className="p-4 border-t bg-white">
+                  <div className="p-4 border-t bg-white flex-shrink-0">
                     <div className="flex space-x-3">
                       <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Type your message..." className="flex-1 px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500" />
                       <button onClick={handleSendMessage} disabled={!inputValue.trim()} className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-2xl flex items-center justify-center disabled:opacity-50"><Send size={18} /></button>

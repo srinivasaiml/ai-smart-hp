@@ -34,7 +34,7 @@ const WhyChooseUs: React.FC = () => {
 
   return (
     <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12">
         <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ x: -50, opacity: 0 }}
@@ -55,7 +55,7 @@ const WhyChooseUs: React.FC = () => {
             animate={inView ? { x: 0, opacity: 1 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-8">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-8">
               Why We're Different
             </h2>
             

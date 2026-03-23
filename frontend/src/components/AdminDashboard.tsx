@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axiosInstance from '../api/axiosInstance';
 import { Appointment } from '../types';
-import { LogOut, RefreshCw, Users, Calendar, Clock, AlertTriangle, ShieldCheck, Search, Filter, TrendingUp, User, Phone, Stethoscope, CheckCircle, XCircle, AlertCircle, Download, Loader2 } from 'lucide-react';
+import { LogOut, RefreshCw, Calendar, Clock, AlertTriangle, ShieldCheck, Search, Filter, TrendingUp, User, Phone, Stethoscope, CheckCircle, XCircle, AlertCircle, Download, Loader2, MessageSquare } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import AppointmentReceipt from './AppointmentReceipt';
@@ -35,6 +35,9 @@ const AdminDashboard: React.FC = () => {
     const [downloadingReceipt, setDownloadingReceipt] = useState<string | null>(null);
     const [receiptData, setReceiptData] = useState<any>(null);
     const receiptRef = useRef<HTMLDivElement>(null);
+    const [activeTab, setActiveTab] = useState<'appointments' | 'messages'>('appointments');
+    const [messages, setMessages] = useState<any[]>([]);
+    const [loadingMessages, setLoadingMessages] = useState<boolean>(false);
     const navigate = useNavigate();
 
     const fetchAppointments = async () => {
@@ -53,7 +56,34 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    useEffect(() => { fetchAppointments(); }, []);
+    const fetchMessages = async () => {
+        setLoadingMessages(true);
+        try {
+            const res = await axiosInstance.get('/contact');
+            if (res.data.success) {
+                setMessages(res.data.data);
+            }
+        } catch (err: any) {
+            console.error('Failed to fetch messages:', err);
+        } finally {
+            setLoadingMessages(false);
+        }
+    };
+
+    const deleteMessage = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this message?')) return;
+        try {
+            await axiosInstance.delete(`/contact/${id}`);
+            setMessages(messages.filter(m => m._id !== id));
+        } catch (err) {
+            alert('Failed to delete message');
+        }
+    };
+
+    useEffect(() => { 
+        fetchAppointments(); 
+        fetchMessages();
+    }, []);
 
     useEffect(() => {
         let filtered = appointments;
@@ -223,31 +253,75 @@ const AdminDashboard: React.FC = () => {
             </motion.header>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Stats Cards */}
+                {/* Tab Navigation */}
+                <div className="flex space-x-4 mb-8">
+                    {[
+                        { id: 'appointments', label: 'Appointments', icon: Calendar },
+                        { id: 'messages', label: 'Contact Messages', icon: MessageSquare }
+                    ].map((tab) => (
+                        <motion.button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-bold transition-all ${
+                                activeTab === tab.id 
+                                ? 'bg-slate-900 text-white shadow-xl scale-105' 
+                                : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-200'
+                            }`}
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <tab.icon size={18} />
+                            <span>{tab.label}</span>
+                            {tab.id === 'messages' && messages.length > 0 && (
+                                <span className="ml-2 w-5 h-5 bg-cyan-500 text-white rounded-full text-[10px] flex items-center justify-center">
+                                    {messages.length}
+                                </span>
+                            )}
+                        </motion.button>
+                    ))}
+                </div>
+
                 <motion.div 
                     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
                 >
-                    {stats.map((stat, index) => (
+                    {activeTab === 'appointments' ? (
+                        stats.map((stat, index) => (
+                            <motion.div
+                                key={index}
+                                className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
+                                variants={itemVariants}
+                                whileHover={{ y: -4 }}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-500 font-medium mb-1">{stat.label}</p>
+                                        <p className="text-3xl font-bold text-gray-800">{stat.value}</p>
+                                    </div>
+                                    <div className={`w-14 h-14 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center shadow-md`}>
+                                        <stat.icon size={24} className="text-white" />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))
+                    ) : (
                         <motion.div
-                            key={index}
-                            className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
+                            className="col-span-full bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
                             variants={itemVariants}
-                            whileHover={{ y: -4 }}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-500 font-medium mb-1">{stat.label}</p>
-                                    <p className="text-3xl font-bold text-gray-800">{stat.value}</p>
+                                    <p className="text-sm text-gray-500 font-medium mb-1">Total Enquiries</p>
+                                    <p className="text-3xl font-bold text-gray-800">{messages.length}</p>
                                 </div>
-                                <div className={`w-14 h-14 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center shadow-md`}>
-                                    <stat.icon size={24} className="text-white" />
+                                <div className="w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md text-white">
+                                    <MessageSquare size={24} />
                                 </div>
                             </div>
                         </motion.div>
-                    ))}
+                    )}
                 </motion.div>
 
                 {/* Main Content Card */}
@@ -257,231 +331,302 @@ const AdminDashboard: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                 >
-                    {/* Filters and Search */}
-                    <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                            <div className="flex items-center space-x-3">
-                                <h2 className="text-2xl font-bold text-gray-800">Reception List</h2>
-                                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                                    {filteredAppointments.length}
-                                </span>
+                    {activeTab === 'appointments' ? (
+                        <>
+                            {/* Filters and Search */}
+                            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                    <div className="flex items-center space-x-3">
+                                        <h2 className="text-2xl font-bold text-gray-800">Reception List</h2>
+                                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                                            {filteredAppointments.length}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                            <input
+                                                type="text"
+                                                placeholder="Search patients, doctors..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full sm:w-64"
+                                            />
+                                        </div>
+
+                                        <div className="relative">
+                                            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                                            <select
+                                                value={statusFilter}
+                                                onChange={(e) => setStatusFilter(e.target.value)}
+                                                className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white cursor-pointer transition-all"
+                                            >
+                                                <option value="all">All Status</option>
+                                                <option value="confirmed">Confirmed</option>
+                                                <option value="pending">Pending</option>
+                                                <option value="completed">Completed</option>
+                                                <option value="cancelled">Cancelled</option>
+                                            </select>
+                                        </div>
+
+                                        <motion.button
+                                            onClick={fetchAppointments}
+                                            disabled={loading}
+                                            className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 transition-all duration-300"
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            <motion.div
+                                                animate={{ rotate: loading ? 360 : 0 }}
+                                                transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: "linear" }}
+                                            >
+                                                <RefreshCw size={16} />
+                                            </motion.div>
+                                            <span className="font-medium">Refresh</span>
+                                        </motion.button>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="Search patients, doctors..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all w-full sm:w-64"
-                                    />
-                                </div>
 
-                                <div className="relative">
-                                    <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
-                                    <select
-                                        value={statusFilter}
-                                        onChange={(e) => setStatusFilter(e.target.value)}
-                                        className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none bg-white cursor-pointer transition-all"
+                            <AnimatePresence>
+                                {error && (
+                                    <motion.div 
+                                        className="px-6 pt-4"
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
                                     >
-                                        <option value="all">All Status</option>
-                                        <option value="confirmed">Confirmed</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="cancelled">Cancelled</option>
-                                    </select>
-                                </div>
+                                        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center space-x-3">
+                                            <AlertTriangle className="text-red-500 flex-shrink-0" size={20} />
+                                            <p className="text-red-700 font-medium">{error}</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
+                            {/* Table */}
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Patient</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Contact</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Doctor</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Specialty</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Appointment</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fee</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <motion.tbody
+                                        variants={containerVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        className="divide-y divide-gray-200"
+                                    >
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan={8} className="px-6 py-12 text-center">
+                                                    <div className="flex flex-col items-center justify-center space-y-3">
+                                                        <motion.div
+                                                            animate={{ rotate: 360 }}
+                                                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                                        >
+                                                            <RefreshCw size={32} className="text-blue-500" />
+                                                        </motion.div>
+                                                        <p className="text-gray-500 font-medium">Loading appointments...</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : filteredAppointments.length > 0 ? (
+                                            filteredAppointments.map((app) => (
+                                                <motion.tr 
+                                                    key={app._id}
+                                                    className="hover:bg-blue-50/50 transition-colors duration-200"
+                                                    variants={itemVariants}
+                                                >
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center space-x-3">
+                                                            {app.userId ? (
+                                                                <>
+                                                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
+                                                                        <User size={18} className="text-white" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-semibold text-gray-800">{app.userId.name}</p>
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <div className="flex items-center space-x-2 text-red-500">
+                                                                    <AlertTriangle size={18} />
+                                                                    <span className="font-medium">Deleted User</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center space-x-2 text-gray-700">
+                                                            <Phone size={14} className="text-gray-400" />
+                                                            <span>{app.userId ? app.userId.mobile : 'N/A'}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        {app.doctorId ? (
+                                                            <div className="flex items-center space-x-2">
+                                                                <Stethoscope size={16} className="text-indigo-500" />
+                                                                <span className="font-semibold text-gray-800">{app.doctorId.name}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-red-500 font-medium">Deleted Doctor</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
+                                                            {app.doctorId ? app.doctorId.specialty : 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center space-x-2 text-sm text-gray-700">
+                                                                <Calendar size={14} className="text-green-500" />
+                                                                <span className="font-medium">{formatDate(app.appointmentDate)}</span>
+                                                            </div>
+                                                            <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                                <Clock size={14} className="text-purple-500" />
+                                                                <span>{formatTime(app.timeSlot)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="font-bold text-gray-800">₹{app.consultationFee || 0}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className={`inline-flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getStatusBadgeClass(app.status)}`}>
+                                                            {getStatusIcon(app.status)}
+                                                            <span className="text-xs font-semibold capitalize">{app.status}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <motion.button
+                                                            onClick={() => handleDownloadReceipt(app)}
+                                                            disabled={downloadingReceipt === app._id || !app.userId || !app.doctorId}
+                                                            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                                                            whileHover={{ scale: downloadingReceipt === app._id ? 1 : 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                        >
+                                                            {downloadingReceipt === app._id ? (
+                                                                <>
+                                                                    <Loader2 size={16} className="animate-spin" />
+                                                                    <span className="text-sm font-medium">Generating...</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Download size={16} />
+                                                                    <span className="text-sm font-medium">Receipt</span>
+                                                                </>
+                                                            )}
+                                                        </motion.button>
+                                                    </td>
+                                                </motion.tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={8} className="px-6 py-12 text-center">
+                                                    <div className="flex flex-col items-center justify-center space-y-3">
+                                                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                                            <Calendar size={32} className="text-gray-400" />
+                                                        </div>
+                                                        <p className="text-gray-500 font-medium">
+                                                            {searchTerm || statusFilter !== 'all' 
+                                                                ? 'No appointments found matching your filters' 
+                                                                : 'No appointments have been booked yet'}
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </motion.tbody>
+                                </table>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Messages Table */}
+                            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
+                                <h2 className="text-2xl font-bold text-gray-800">Contact Enquiries</h2>
                                 <motion.button
-                                    onClick={fetchAppointments}
-                                    disabled={loading}
-                                    className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl shadow-md hover:shadow-lg disabled:opacity-50 transition-all duration-300"
+                                    onClick={fetchMessages}
+                                    disabled={loadingMessages}
+                                    className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-xl shadow-md"
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <motion.div
-                                        animate={{ rotate: loading ? 360 : 0 }}
-                                        transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: "linear" }}
-                                    >
-                                        <RefreshCw size={16} />
-                                    </motion.div>
-                                    <span className="font-medium">Refresh</span>
+                                    <RefreshCw size={16} className={loadingMessages ? 'animate-spin' : ''} />
+                                    <span>Refresh</span>
                                 </motion.button>
                             </div>
-                        </div>
-                    </div>
 
-                    <AnimatePresence>
-                        {error && (
-                            <motion.div 
-                                className="px-6 pt-4"
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                            >
-                                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center space-x-3">
-                                    <AlertTriangle className="text-red-500 flex-shrink-0" size={20} />
-                                    <p className="text-red-700 font-medium">{error}</p>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    {/* Table */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Patient</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Contact</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Doctor</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Specialty</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Appointment</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Fee</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <motion.tbody
-                                variants={containerVariants}
-                                initial="hidden"
-                                animate="visible"
-                                className="divide-y divide-gray-200"
-                            >
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-12 text-center">
-                                            <div className="flex flex-col items-center justify-center space-y-3">
-                                                <motion.div
-                                                    animate={{ rotate: 360 }}
-                                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                                >
-                                                    <RefreshCw size={32} className="text-blue-500" />
-                                                </motion.div>
-                                                <p className="text-gray-500 font-medium">Loading appointments...</p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ) : filteredAppointments.length > 0 ? (
-                                    filteredAppointments.map((app) => (
-                                        <motion.tr 
-                                            key={app._id}
-                                            className="hover:bg-blue-50/50 transition-colors duration-200"
-                                            variants={itemVariants}
-                                        >
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center space-x-3">
-                                                    {app.userId ? (
-                                                        <>
-                                                            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
-                                                                <User size={18} className="text-white" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-semibold text-gray-800">{app.userId.name}</p>
-                                                            </div>
-                                                        </>
-                                                    ) : (
-                                                        <div className="flex items-center space-x-2 text-red-500">
-                                                            <AlertTriangle size={18} />
-                                                            <span className="font-medium">Deleted User</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center space-x-2 text-gray-700">
-                                                    <Phone size={14} className="text-gray-400" />
-                                                    <span>{app.userId ? app.userId.mobile : 'N/A'}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {app.doctorId ? (
-                                                    <div className="flex items-center space-x-2">
-                                                        <Stethoscope size={16} className="text-indigo-500" />
-                                                        <span className="font-semibold text-gray-800">{app.doctorId.name}</span>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Sender</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Subject</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Message</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Date</th>
+                                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {loadingMessages ? (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">Loading messages...</td>
+                                            </tr>
+                                        ) : messages.length > 0 ? (
+                                            messages.map((msg) => (
+                                                <tr key={msg._id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <p className="font-bold text-slate-800">{msg.name}</p>
+                                                        <p className="text-sm text-slate-500">{msg.email}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                                                            {msg.subject}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 max-w-xs">
+                                                        <p className="text-sm text-slate-600 line-clamp-2">{msg.message}</p>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-slate-500">
+                                                        {new Date(msg.createdAt).toLocaleDateString()}
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <button 
+                                                            onClick={() => deleteMessage(msg._id)}
+                                                            className="text-red-500 hover:text-red-700 font-bold text-sm"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={5} className="px-6 py-24 text-center">
+                                                    <div className="flex flex-col items-center space-y-2 opacity-50">
+                                                        <MessageSquare size={48} />
+                                                        <p className="font-bold">No messages found</p>
                                                     </div>
-                                                ) : (
-                                                    <span className="text-red-500 font-medium">Deleted Doctor</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
-                                                    {app.doctorId ? app.doctorId.specialty : 'N/A'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center space-x-2 text-sm text-gray-700">
-                                                        <Calendar size={14} className="text-green-500" />
-                                                        <span className="font-medium">{formatDate(app.appointmentDate)}</span>
-                                                    </div>
-                                                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                                        <Clock size={14} className="text-purple-500" />
-                                                        <span>{formatTime(app.timeSlot)}</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="font-bold text-gray-800">₹{app.consultationFee || 0}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className={`inline-flex items-center space-x-2 px-3 py-1.5 rounded-full border ${getStatusBadgeClass(app.status)}`}>
-                                                    {getStatusIcon(app.status)}
-                                                    <span className="text-xs font-semibold capitalize">{app.status}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <motion.button
-                                                    onClick={() => handleDownloadReceipt(app)}
-                                                    disabled={downloadingReceipt === app._id || !app.userId || !app.doctorId}
-                                                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                                                    whileHover={{ scale: downloadingReceipt === app._id ? 1 : 1.05 }}
-                                                    whileTap={{ scale: 0.95 }}
-                                                >
-                                                    {downloadingReceipt === app._id ? (
-                                                        <>
-                                                            <Loader2 size={16} className="animate-spin" />
-                                                            <span className="text-sm font-medium">Generating...</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Download size={16} />
-                                                            <span className="text-sm font-medium">Receipt</span>
-                                                        </>
-                                                    )}
-                                                </motion.button>
-                                            </td>
-                                        </motion.tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={8} className="px-6 py-12 text-center">
-                                            <div className="flex flex-col items-center justify-center space-y-3">
-                                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                                    <Calendar size={32} className="text-gray-400" />
-                                                </div>
-                                                <p className="text-gray-500 font-medium">
-                                                    {searchTerm || statusFilter !== 'all' 
-                                                        ? 'No appointments found matching your filters' 
-                                                        : 'No appointments have been booked yet'}
-                                                </p>
-                                                {(searchTerm || statusFilter !== 'all') && (
-                                                    <button
-                                                        onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
-                                                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                                                    >
-                                                        Clear filters
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )}
-                            </motion.tbody>
-                        </table>
-                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    )}
                 </motion.div>
             </div>
         </div>

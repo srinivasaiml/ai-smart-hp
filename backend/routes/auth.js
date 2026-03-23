@@ -8,7 +8,7 @@ import User from '../models/User.js';
 const router = express.Router();
 
 // Generate JWT token - a single function for all token generation
-const generateToken = (payload, expiresIn = '1d') => {
+const generateToken = (payload, expiresIn = process.env.JWT_EXPIRES_IN || '1d') => {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 };
 

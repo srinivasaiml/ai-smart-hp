@@ -1,22 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Menu, X, MessageCircle, Phone, Mail, MapPin } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X, Search, User, LogOut, Sparkles, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useChat } from '../contexts/ChatContext';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { isAuthenticated, user, logout } = useAuth();
+  const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark for premium look
+  const { isAuthenticated, logout } = useAuth();
   const { openChat } = useChat();
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
+    
+    // Initial theme check - sync state with DOM
+    setIsDarkMode(document.documentElement.classList.contains('dark'));
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDarkMode(true);
+    }
+  };
 
   const handleChatClick = () => {
     if (isAuthenticated) {
@@ -35,164 +52,152 @@ const Header: React.FC = () => {
   ];
 
   return (
-    <>
-      {/* Top Bar */}
-      <div className="bg-gradient-to-r from-teal-600 to-blue-600 text-white py-2 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm">
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <Phone size={14} />
-              <span>Emergency: +91 123 456 7890</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Mail size={14} />
-              <span>info@srinivasahospital.com</span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 mt-1 md:mt-0">
-            <MapPin size={14} />
-            <span>Rajamundry, Andhra Pradesh, India</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg py-2 mt-0' : 'bg-transparent py-4 mt-10'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <motion.div 
-              className="flex items-center space-x-3"
-              initial={{ x: -50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-xl">S</span>
-              </div>
-              <div className={`font-bold text-xl ${isScrolled ? 'text-gray-800' : 'text-white'}`}>
-                <span className="font-serif">Srinivasa</span>{' '}
-                <span className="text-orange-500 font-sans">Hospital</span>
-              </div>
-            </motion.div>
-
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-8">
-              {navLinks.map((link, index) => (
-                <motion.a
-                  key={link.href}
-                  href={link.href}
-                  className={`font-medium transition-all duration-300 hover:text-orange-500 relative group ${
-                    isScrolled ? 'text-gray-700' : 'text-white'
-                  }`}
-                  initial={{ y: -20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  {link.label}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
-                </motion.a>
-              ))}
-              
-              <motion.button
-                onClick={handleChatClick}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-full transition-all duration-300 transform hover:scale-105 ${
-                  isScrolled 
-                    ? 'bg-gradient-to-r from-teal-500 to-blue-600 text-white shadow-lg hover:shadow-xl' 
-                    : 'bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30'
-                }`}
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+    <header className="fixed top-0 left-0 right-0 z-[100] transition-all duration-500 pointer-events-none">
+      <div className={`w-full transition-all duration-500 ${isScrolled ? 'py-4' : 'py-6'}`}>
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12">
+          <motion.nav 
+            className={`pointer-events-auto relative px-6 py-4 rounded-3xl border transition-all duration-500 ${
+              isScrolled 
+                ? 'bg-white/70 dark:bg-slate-950/70 backdrop-blur-2xl border-slate-200 dark:border-white/10 shadow-xl' 
+                : 'bg-transparent border-transparent'
+            }`}
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className="flex justify-between items-center">
+              {/* Logo */}
+              <motion.a 
+                href="#home"
+                className="flex items-center space-x-3 group"
+                whileHover={{ scale: 1.02 }}
               >
-                <MessageCircle size={18} />
-                <span className="font-medium">Booking Doctor</span>
-              </motion.button>
-              
-              {isAuthenticated ? (
-                <motion.div className="flex items-center space-x-4">
-                  <span className={`text-sm font-medium ${isScrolled ? 'text-gray-600' : 'text-white/90'}`}>
-                    Welcome, {user?.name.split(' ')[0]}
-                  </span>
-                  <button
-                    onClick={logout}
-                    className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
-                  >
-                    Logout
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  onClick={() => document.dispatchEvent(new CustomEvent('openAuthModal'))}
-                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
-                  initial={{ y: -20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Get Started
-                </motion.button>
-              )}
-            </div>
+                <div className="relative w-10 h-10">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-xl blur-lg opacity-40 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative w-full h-full bg-slate-950 rounded-xl border border-white/10 flex items-center justify-center overflow-hidden">
+                    <span className="text-white font-black text-xl">S</span>
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-slate-900 dark:text-white font-black text-xl leading-none tracking-tighter uppercase">Srinivasa</span>
+                  <span className="text-cyan-500 dark:text-cyan-400 font-bold text-[10px] tracking-[0.3em]">HOSPITAL</span>
+                </div>
+              </motion.a>
 
-            {/* Mobile menu button */}
-            <div className="lg:hidden">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`p-2 rounded-md transition-colors ${isScrolled ? 'text-gray-700' : 'text-white'}`}
-              >
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Navigation */}
-          {isMenuOpen && (
-            <motion.div
-              className="lg:hidden mt-4 pb-4"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <div className="flex flex-col space-y-3 bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-xl">
+              {/* Desktop Nav Links */}
+              <div className="hidden lg:flex items-center space-x-1">
                 {navLinks.map((link) => (
                   <a
                     key={link.href}
                     href={link.href}
-                    className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-teal-50 hover:text-teal-600 transition-colors font-medium"
-                    onClick={() => setIsMenuOpen(false)}
+                    className="px-5 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-cyan-500 dark:hover:text-white transition-colors relative group"
                   >
-                    {link.label}
+                    <span className="relative z-10">{link.label}</span>
+                    <motion.div 
+                      className="absolute bottom-0 left-5 right-5 h-[2px] bg-cyan-500 origin-left"
+                      initial={{ scaleX: 0 }}
+                      whileHover={{ scaleX: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
                   </a>
                 ))}
-                <button
-                  onClick={handleChatClick}
-                  className="flex items-center justify-center space-x-2 px-3 py-3 bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-lg font-medium"
+              </div>
+
+              {/* Action Buttons */}
+              <div className="hidden lg:flex items-center space-x-4">
+                <motion.button
+                  onClick={toggleTheme}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:text-cyan-500 dark:hover:text-white transition-all shadow-sm"
+                  title="Toggle Theme"
                 >
-                  <MessageCircle size={18} />
-                  <span>Book Doctor</span>
-                </button>
-                {!isAuthenticated && (
-                  <button
-                    onClick={() => {
-                      document.dispatchEvent(new CustomEvent('openAuthModal'));
-                      setIsMenuOpen(false);
-                    }}
-                    className="px-3 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium"
+                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </motion.button>
+                
+                <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/10 mx-2" />
+
+                <motion.button
+                  onClick={handleChatClick}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center space-x-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white dark:text-slate-950 font-black text-xs uppercase tracking-widest shadow-lg transition-all"
+                >
+                  <Sparkles size={16} />
+                  <span>Book Now</span>
+                </motion.button>
+
+                {isAuthenticated ? (
+                  <motion.button
+                    onClick={logout}
+                    whileHover={{ scale: 1.05 }}
+                    className="flex items-center space-x-2 px-4 py-2.5 rounded-xl border border-rose-500/20 text-rose-500 dark:text-rose-400 hover:bg-rose-500/10 transition-all font-bold text-xs"
                   >
-                    Get Started
-                  </button>
+                    <LogOut size={16} />
+                    <span>LOGOUT</span>
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    onClick={() => document.dispatchEvent(new CustomEvent('openAuthModal'))}
+                    whileHover={{ scale: 1.05 }}
+                    className="flex items-center space-x-2 px-5 py-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white font-bold text-xs hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                  >
+                    <User size={16} />
+                    <span>GET STARTED</span>
+                  </motion.button>
                 )}
               </div>
-            </motion.div>
-          )}
+
+              {/* Mobile Toggle */}
+              <div className="lg:hidden flex items-center space-x-4 pointer-events-auto">
+                <button onClick={toggleTheme} className="text-slate-900 dark:text-white">
+                  {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
+                <button 
+                  className="w-10 h-10 flex items-center justify-center text-slate-900 dark:text-white"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                  {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+              </div>
+            </div>
+          </motion.nav>
         </div>
-      </nav>
-    </>
+      </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden absolute top-full left-4 right-4 bg-white/95 dark:bg-slate-950/95 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-3xl mt-2 overflow-hidden pointer-events-auto shadow-2xl"
+          >
+            <div className="p-8 flex flex-col space-y-4">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-2xl font-black text-slate-900 dark:text-white hover:text-cyan-500 transition-colors py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </a>
+              ))}
+              <div className="h-px bg-slate-200 dark:bg-white/10 w-full my-4" />
+              <button
+                onClick={handleChatClick}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-black flex items-center justify-center space-x-3"
+              >
+                <Sparkles size={20} />
+                <span>BOOK APPOINTMENT</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
   );
 };
 

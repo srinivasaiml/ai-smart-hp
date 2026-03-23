@@ -70,7 +70,7 @@ const Testimonials: React.FC = () => {
 
   return (
     <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12">
         <motion.div
           ref={ref}
           className="text-center mb-16"
@@ -87,7 +87,7 @@ const Testimonials: React.FC = () => {
             Patient Stories
           </motion.div>
           
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6">
             <span className="font-serif">What Our</span>{' '}
             <span className="bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
               Patients Say

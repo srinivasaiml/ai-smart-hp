@@ -40,6 +40,7 @@ export interface Appointment {
   appointmentDate: string; // Comes as ISO string from backend
   timeSlot: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  consultationFee?: number;
   createdAt: string;
   symptoms?: string[];
 }

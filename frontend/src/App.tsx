@@ -11,13 +11,15 @@ import Hero from './components/Hero';
 import Services from './components/Services';
 import About from './components/About';
 import Doctors from './components/Doctors';
+import Contact from './components/Contact';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
 import AuthModal from './components/AuthModal';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import SymptomChecker from './components/SymptomChecker';
-import Testimonials from './components/Testimonials';
+// import SymptomChecker from './components/SymptomChecker';
+// import Testimonials from './components/Testimonials';
 
 // Main website layout component
 function MainLayout() {
@@ -30,7 +32,7 @@ function MainLayout() {
         <Services />
         <About />
         <Doctors />
-        <Testimonials />
+        <Contact />
       </main>
       <Footer />
       <Chatbot />
@@ -50,6 +52,15 @@ const AdminProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ child
 };
 
 const App: React.FC = () => {
+  React.useEffect(() => {
+    const theme = localStorage.getItem('theme') || 'dark';
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <ChatProvider>

@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.js';
 import appointmentRoutes from './routes/appointments.js';
 import doctorRoutes from './routes/doctors.js';
 import mlRoutes from './routes/ml.js'; 
+import contactRoutes from './routes/contact.js';
 
 
 // Load environment variables from .env file
@@ -66,6 +67,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/ml', mlRoutes);
+app.use('/api/contact', contactRoutes);
 
 // --- Health check endpoint ---
 app.get('/api/health', (req, res) => {

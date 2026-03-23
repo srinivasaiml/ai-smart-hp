@@ -11,6 +11,7 @@ axiosInstance.interceptors.request.use(
      const adminRoutePrefixes = [
       '/appointments/all',
       '/auth/admin-login',
+      '/contact',
       // You can add other admin route prefixes here in the future
     ];
 
@@ -35,6 +36,20 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle 401 errors
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('adminToken');
+      window.location.assign('/'); 
+    }
     return Promise.reject(error);
   }
 );
